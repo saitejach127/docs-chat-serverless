@@ -9,7 +9,8 @@ create table if not exists document_vectors (
 create or replace function match_documents (
   query_embedding vector(1536),
   match_threshold float,
-  match_count int
+  match_count int,
+  name_document VARCHAR
 )
 returns table (
   id bigint,
@@ -25,7 +26,7 @@ begin
     document_vectors.content,
     1 - (document_vectors.embedding <=> query_embedding) as similarity
   from document_vectors
-  where 1 - (document_vectors.embedding <=> query_embedding) > match_threshold
+  where document_vectors.document_name = name_document and (1 - (document_vectors.embedding <=> query_embedding) > match_threshold)
   order by similarity desc
   limit match_count;
 end;

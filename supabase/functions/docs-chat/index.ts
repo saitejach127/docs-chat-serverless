@@ -18,7 +18,7 @@ serve(async (req) => {
   const EMBEDDING_MODEL = "text-embedding-ada-002"
   const GPT_MODEL = "text-davinci-003"
   // Search query is passed in request payload
-  const { query } = await req.json()
+  const { query, document_name } = await req.json()
 
   // OpenAI recommends replacing newlines with spaces for best results
   const input = query.replace(/\n/g, ' ')
@@ -44,6 +44,7 @@ serve(async (req) => {
     query_embedding: embedding,
     match_threshold: 0.78, // Choose an appropriate threshold for your data
     match_count: 10, // Choose the number of matches
+    name_document: document_name
   })
   console.log("got embeddings", embedding);
   const tokenizer = new GPT3Tokenizer({ type: 'gpt3' })
@@ -81,6 +82,7 @@ serve(async (req) => {
   const completionResponse = await openai.createCompletion({
     model: GPT_MODEL,
     prompt,
+    max_tokens:1024,
     temperature: 0, // Set to 0 for deterministic results
   })
 
