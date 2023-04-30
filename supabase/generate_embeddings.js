@@ -1,6 +1,7 @@
 const { createClient } = require("@supabase/supabase-js");
 const { Configuration, OpenAIApi } = require("openai");
 const { TextLoader } = require("langchain/document_loaders/fs/text");
+require("dotenv").config();
 
 async function getDocuments() {
   const loader = new TextLoader(
@@ -13,11 +14,11 @@ async function getDocuments() {
 }
 
 async function generateEmbeddings() {
-  const configuration = new Configuration({ apiKey: "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" });
+  const configuration = new Configuration({ apiKey: process.env.OPENAI_API_KEY });
   const openai = new OpenAIApi(configuration);
 
   const documents = await getDocuments(); // Your custom function to load docs
-  const supabase = createClient('https://fbhwttacuyzgmbgdbusv.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiaHd0dGFjdXl6Z21iZ2RidXN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODI3OTIwODgsImV4cCI6MTk5ODM2ODA4OH0.epV9pTEvyppD_DeINU3G0bgx6ZlFdFCYRcV-P7eixmM')
+  const supabase = createClient(process.env.SUPABASE_URL,process.env.SUPABASE_ANON_KEY)
   // Assuming each document is a string
   console.log("document started embeddings")
   const document_name = "servicenow_csm";

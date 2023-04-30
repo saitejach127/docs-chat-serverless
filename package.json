@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.21.0",
+    "dotenv": "^16.0.3",
     "langchain": "^0.0.66",
     "openai": "^3.2.1",
     "pdf-parse": "^1.1.1",

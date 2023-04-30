@@ -15,18 +15,20 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  const EMBEDDING_MODEL = "text-embedding-ada-002"
+  const GPT_MODEL = "text-davinci-003"
   // Search query is passed in request payload
   const { query } = await req.json()
 
   // OpenAI recommends replacing newlines with spaces for best results
   const input = query.replace(/\n/g, ' ')
 
-  const configuration = new Configuration({ apiKey: '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' })
+  const configuration = new Configuration({ apiKey: Deno.env.get("OPENAI_API_KEY") })
   const openai = new OpenAIApi(configuration)
 
   // Generate a one-time embedding for the query itself
   const embeddingResponse = await openai.createEmbedding({
-    model: 'text-embedding-ada-002',
+    model: EMBEDDING_MODEL,
     input,
   })
 
@@ -36,7 +38,7 @@ serve(async (req) => {
   //
   // Ideally for context injection, documents are chunked into
   // smaller sections at earlier pre-processing/embedding step.
-  const supabase = createClient('https://fbhwttacuyzgmbgdbusv.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiaHd0dGFjdXl6Z21iZ2RidXN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODI3OTIwODgsImV4cCI6MTk5ODM2ODA4OH0.epV9pTEvyppD_DeINU3G0bgx6ZlFdFCYRcV-P7eixmM')
+  const supabase = createClient(Deno.env.get("SUPABASE_URL"),Deno.env.get("SUPABASE_ANON_KEY"))
   
   const { data: documents } = await supabase.rpc('match_documents', {
     query_embedding: embedding,
@@ -77,9 +79,8 @@ serve(async (req) => {
   console.log("prepared prompt")
   // In production we should handle possible errors
   const completionResponse = await openai.createCompletion({
-    model: 'text-davinci-003',
+    model: GPT_MODEL,
     prompt,
-    max_tokens: 512, // Choose the max allowed tokens in completion
     temperature: 0, // Set to 0 for deterministic results
   })
 
