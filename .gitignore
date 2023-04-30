@@ -130,3 +130,7 @@ dist
 .pnp.*
 
 package-lock.json
+.branches
+.vscode
+documents
+processed_documents
