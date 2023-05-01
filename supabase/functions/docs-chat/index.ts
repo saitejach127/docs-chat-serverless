@@ -16,7 +16,9 @@ serve(async (req) => {
   }
 
   const EMBEDDING_MODEL = "text-embedding-ada-002"
-  const GPT_MODEL = "text-davinci-003"
+  const GPT_MODEL = "gpt-3.5-turbo"
+  const CONTEXT_MAX_TOKEN_LIMIT = 2500
+  const MAX_TOKEN_RESPONSE_ANSWER = 1024
   // Search query is passed in request payload
   const { query, document_name } = await req.json()
 
@@ -48,7 +50,6 @@ serve(async (req) => {
     match_count: 10, // Choose the number of matches
     name_document: document_name
   })
-  console.log("got embeddings", embedding);
   const tokenizer = new GPT3Tokenizer({ type: 'gpt3' })
   let tokenCount = 0
   let contextText = ''
@@ -61,7 +62,7 @@ serve(async (req) => {
     tokenCount += encoded.text.length
 
     // Limit context to max 1500 tokens (configurable)
-    if (tokenCount > 1500) {
+    if (tokenCount > CONTEXT_MAX_TOKEN_LIMIT) {
       break
     }
 
@@ -79,15 +80,14 @@ serve(async (req) => {
 
     Answer:
   `
-  console.log("prepared prompt")
 
   const completionOptions: CreateCompletionRequest = {
-    model: 'gpt-3.5-turbo',
+    model: GPT_MODEL,
     messages: [{
       "role": "user",
       "content": prompt
     }],
-    max_tokens: 512,
+    max_tokens: 1024,
     temperature: 0,
     stream: true
   }
