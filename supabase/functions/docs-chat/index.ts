@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.170.0/http/server.ts'
 import 'https://deno.land/x/xhr@0.2.1/mod.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.5.0'
 import GPT3Tokenizer from 'https://esm.sh/gpt3-tokenizer@1.1.5'
-import { Configuration, OpenAIApi } from 'https://esm.sh/openai@3.1.0'
+import { Configuration, CreateCompletionRequest, OpenAIApi } from 'https://esm.sh/openai@3.1.0'
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,7 +23,9 @@ serve(async (req) => {
   // OpenAI recommends replacing newlines with spaces for best results
   const input = query.replace(/\n/g, ' ')
 
-  const configuration = new Configuration({ apiKey: Deno.env.get("OPENAI_API_KEY") })
+  const openAiKey = Deno.env.get("OPENAI_API_KEY")
+
+  const configuration = new Configuration({ apiKey: openAiKey })
   const openai = new OpenAIApi(configuration)
 
   // Generate a one-time embedding for the query itself
@@ -78,22 +80,31 @@ serve(async (req) => {
     Answer:
   `
   console.log("prepared prompt")
-  // In production we should handle possible errors
-  const completionResponse = await openai.createCompletion({
-    model: GPT_MODEL,
-    prompt,
-    max_tokens:1024,
-    temperature: 0, // Set to 0 for deterministic results
+
+  const completionOptions: CreateCompletionRequest = {
+    model: 'gpt-3.5-turbo',
+    messages: [{
+      "role": "user",
+      "content": prompt
+    }],
+    max_tokens: 512,
+    temperature: 0,
+    stream: true
+  }
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    headers: {
+      Authorization: `Bearer ${openAiKey}`,
+      'Content-Type': 'application/json',
+    },
+    method: 'POST',
+    body: JSON.stringify(completionOptions),
   })
 
-  const {
-    id,
-    choices: [{ text }],
-  } = completionResponse.data
-
-  console.log("answer is ", text, id);
-
-  return new Response(JSON.stringify({ id, text }), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  return new Response(response.body, {
+    headers: {
+      ...corsHeaders,
+      'Content-Type': 'text/event-stream',
+    },
   })
 })
