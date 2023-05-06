@@ -70,7 +70,7 @@ serve(async (req) => {
   }
 
   const prompt = `
-    Use the below ServiceNow Customer Service Management Documentation to answer the subsequent question. If the answer cannot be found in the article, write "I could not find an answer."
+    Use the below ServiceNow Customer Service Management Documentation and previous user questions to answer the subsequent question. If the answer cannot be found, write "I could not find an answer."
     Context sections:
     ${contextText}
 
