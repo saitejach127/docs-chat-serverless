@@ -20,7 +20,7 @@ serve(async (req) => {
   const CONTEXT_MAX_TOKEN_LIMIT = 2500
   const MAX_TOKEN_RESPONSE_ANSWER = 1024
   // Search query is passed in request payload
-  const { query, document_name } = await req.json()
+  const { query, document_name, previous_qas } = await req.json()
 
   // OpenAI recommends replacing newlines with spaces for best results
   const input = query.replace(/\n/g, ' ')
@@ -81,13 +81,23 @@ serve(async (req) => {
     Answer:
   `
 
+  var messages: any = [];
+
+  previous_qas && previous_qas.forEach(previous_qa => {
+    messages.push({
+      "role": "user", "content": previous_qa.question
+    });
+    messages.push({
+      "role": "assistant",
+      "content": previous_qa.answer
+    })
+  });
+  messages.push({"role": "user", "content": prompt})
+
   const completionOptions: CreateCompletionRequest = {
     model: GPT_MODEL,
-    messages: [{
-      "role": "user",
-      "content": prompt
-    }],
-    max_tokens: 1024,
+    messages,
+    max_tokens: MAX_TOKEN_RESPONSE_ANSWER,
     temperature: 0,
     stream: true
   }

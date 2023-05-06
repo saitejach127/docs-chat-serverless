@@ -159,6 +159,17 @@
         const typingMessage = document.querySelector(".typing-message");
         let disabled = false;
 
+        var qa_stack = [];
+        var MAX_STACK_LENGTH = 3;
+        var temp_answer_storage = "";
+
+        function addQAToStack(qa){
+            if(qa_stack.length === MAX_STACK_LENGTH){
+                qa_stack.shift();
+            }
+            qa_stack.push(qa);
+        }
+
         async function addBotMessage(message, usermessage) {
 
             const chatMessage = document.createElement("div");
@@ -187,7 +198,7 @@
         }
 
         async function fetchingAnswer(message) {
-            const question = { "query": message, "document_name": "servicenow_csm" };
+            const question = { "query": message, "document_name": "servicenow_csm", "previous_qas": qa_stack };
 
             const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiaHd0dGFjdXl6Z21iZ2RidXN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODI3OTIwODgsImV4cCI6MTk5ODM2ODA4OH0.epV9pTEvyppD_DeINU3G0bgx6ZlFdFCYRcV-P7eixmM";
             const options = {
@@ -227,6 +238,12 @@
                                     typingMessage.style.display = "none";
                                     sendButton.disabled = false;
                                     disabled = false;
+                                    var qaForStack = {
+                                        question: message,
+                                        answer: temp_answer_storage
+                                    }
+                                    addQAToStack(qaForStack);
+                                    temp_answer_storage = "";
                                     console.log("[end]");
                                     return;
                                 }
@@ -247,6 +264,7 @@
                                         if (content) {
                                             console.log("Content:", content);
                                             chatMessage.innerHTML += content;
+                                            temp_answer_storage += content;
                                             chatLog.scrollTop = chatLog.scrollHeight;
                                         }
                                     } catch (error) {
