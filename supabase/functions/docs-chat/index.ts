@@ -47,7 +47,7 @@ serve(async (req) => {
   const { data: documents } = await supabase.rpc('match_documents', {
     query_embedding: embedding,
     match_threshold: 0.78, // Choose an appropriate threshold for your data
-    match_count: 10, // Choose the number of matches
+    match_count: 20, // Choose the number of matches
     name_document: document_name
   })
   const tokenizer = new GPT3Tokenizer({ type: 'gpt3' })

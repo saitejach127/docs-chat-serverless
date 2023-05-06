@@ -160,11 +160,11 @@
         let disabled = false;
 
         var qa_stack = [];
-        var MAX_STACK_LENGTH = 3;
+        var MAX_MEMORY_LENGTH = 5;
         var temp_answer_storage = "";
 
         function addQAToStack(qa){
-            if(qa_stack.length === MAX_STACK_LENGTH){
+            if(qa_stack.length === MAX_MEMORY_LENGTH){
                 qa_stack.shift();
             }
             qa_stack.push(qa);
