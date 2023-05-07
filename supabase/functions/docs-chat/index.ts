@@ -30,10 +30,16 @@ serve(async (req) => {
   const configuration = new Configuration({ apiKey: openAiKey })
   const openai = new OpenAIApi(configuration)
 
+  var embedding_input = "";
+  previous_qas && previous_qas.forEach((conversation) => {
+    embedding_input += conversation.question + " and ";
+  })
+  embedding_input += input;
+
   // Generate a one-time embedding for the query itself
   const embeddingResponse = await openai.createEmbedding({
     model: EMBEDDING_MODEL,
-    input,
+    input: embedding_input,
   })
 
   const [{ embedding }] = embeddingResponse.data.data
@@ -47,7 +53,7 @@ serve(async (req) => {
   const { data: documents } = await supabase.rpc('match_documents', {
     query_embedding: embedding,
     match_threshold: 0.78, // Choose an appropriate threshold for your data
-    match_count: 20, // Choose the number of matches
+    match_count: 10, // Choose the number of matches
     name_document: document_name
   })
   const tokenizer = new GPT3Tokenizer({ type: 'gpt3' })
@@ -69,29 +75,41 @@ serve(async (req) => {
     contextText += `${content.trim()}\n---\n`
   }
 
-  const prompt = `
-    Use the below ServiceNow Customer Service Management Documentation and previous user questions to answer the subsequent question. If the answer cannot be found, write "I could not find an answer."
-    Context sections:
-    ${contextText}
+  var conversations = "";
 
-    Question: """
-    ${query}
-    """
+  previous_qas && previous_qas.forEach((conversation) => {
+    conversations += `Human: ${conversation.question}\nServicenow Chatbot: ${conversation.answer}\n`;
+  })
+
+  const prompt = `
+    You are a Servicenow chatbot who answers the question delimited by triple single quotes, based on previous conversations and the context delimited by triple quotes. If the answer cannot be found, write "I could not find an answer."
+    Previous Conversations:
+    ${conversations}
+    
+    Context sections:
+    """${contextText}"""
+
+    Question: 
+    '''${query}'''
 
     Answer:
   `
-
   var messages: any = [];
 
-  previous_qas && previous_qas.forEach(previous_qa => {
-    messages.push({
-      "role": "user", "content": previous_qa.question
-    });
-    messages.push({
-      "role": "assistant",
-      "content": previous_qa.answer
-    })
-  });
+  // messages.push({
+  //   "role": "system",
+  //   "content": ``
+  // })
+
+  // previous_qas && previous_qas.forEach(previous_qa => {
+  //   messages.push({
+  //     "role": "user", "content": previous_qa.question
+  //   });
+  //   messages.push({
+  //     "role": "assistant",
+  //     "content": previous_qa.answer
+  //   })
+  // });
   messages.push({"role": "user", "content": prompt})
 
   const completionOptions: CreateCompletionRequest = {
