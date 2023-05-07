@@ -30,12 +30,60 @@ serve(async (req) => {
   const configuration = new Configuration({ apiKey: openAiKey })
   const openai = new OpenAIApi(configuration)
 
-  var embedding_input = "";
-  previous_qas && previous_qas.forEach((conversation) => {
-    embedding_input += conversation.question + " and ";
-  })
-  embedding_input += input;
+  var embedding_input = input;
 
+  if(previous_qas && previous_qas.length > 0){
+      var previousQuestions = "";
+    
+    previous_qas && previous_qas.forEach((questionAnswer, i) => {
+      previousQuestions += `Question ${i+1}: ${questionAnswer.question}\n`;
+    });
+
+    var numberMoreString = "";
+    for(let i=0;i<previous_qas.length;i++){
+      if(previous_qas.length === 1){
+        numberMoreString = "1";
+        break;
+      }
+      if(i==previous_qas.length - 1){
+        numberMoreString += `and ${i+1}`;
+        break;
+      }
+      numberMoreString += `${i+1}, `;
+    }
+
+    console.log("number string", numberMoreString);
+
+    const questionFetchingPrompt = `
+    Below, there are ${previous_qas.length || 0} questions asked one after another, I want you to write the question for question ${(previous_qas.length || 0) + 1} itself such that it can stand alone without explicitly stating questions ${numberMoreString}. Only give me the question as output
+    ${previousQuestions}
+    Question ${(previous_qas.length || 0) + 1}: ${input}
+    `
+
+    console.log("question getting prompt \n", questionFetchingPrompt);
+
+    const questionCompletionOptions = {
+      model: GPT_MODEL,
+      messages: [{"role": "user", "content": questionFetchingPrompt}],
+      max_tokens: MAX_TOKEN_RESPONSE_ANSWER,
+      temperature: 0
+    }
+
+    const questionCompletionResponseJson = await fetch('https://api.openai.com/v1/chat/completions', {
+      headers: {
+        Authorization: `Bearer ${openAiKey}`,
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      body: JSON.stringify(questionCompletionOptions),
+    })
+
+    const questionCompletionResponse = await questionCompletionResponseJson.json();
+    embedding_input = questionCompletionResponse['choices'][0]['message']['content'];
+
+    console.log("embedding question input is : \n", embedding_input);
+
+  }
   // Generate a one-time embedding for the query itself
   const embeddingResponse = await openai.createEmbedding({
     model: EMBEDDING_MODEL,
@@ -53,7 +101,7 @@ serve(async (req) => {
   const { data: documents } = await supabase.rpc('match_documents', {
     query_embedding: embedding,
     match_threshold: 0.78, // Choose an appropriate threshold for your data
-    match_count: 10, // Choose the number of matches
+    match_count: 20, // Choose the number of matches
     name_document: document_name
   })
   const tokenizer = new GPT3Tokenizer({ type: 'gpt3' })
@@ -75,24 +123,16 @@ serve(async (req) => {
     contextText += `${content.trim()}\n---\n`
   }
 
-  var conversations = "";
-
-  previous_qas && previous_qas.forEach((conversation) => {
-    conversations += `Human: ${conversation.question}\nServicenow Chatbot: ${conversation.answer}\n`;
-  })
-
   const prompt = `
-    You are a Servicenow chatbot who answers the question delimited by triple single quotes, based on previous conversations and the context delimited by triple quotes. If the answer cannot be found, write "I could not find an answer."
-    Previous Conversations:
-    ${conversations}
-    
-    Context sections:
-    """${contextText}"""
+  Use the below ServiceNow Customer Service Management Documentation to answer the subsequent question. If the answer cannot be found in the article, write "I could not find an answer."
+  
+  Context sections:
+  """${contextText}"""
 
-    Question: 
-    '''${query}'''
+  Question: 
+  '''${embedding_input}'''
 
-    Answer:
+  Answer:
   `
   var messages: any = [];
 
