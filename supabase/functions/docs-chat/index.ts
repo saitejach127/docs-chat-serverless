@@ -152,12 +152,11 @@ serve(async (req) => {
   // });
   messages.push({"role": "user", "content": prompt})
 
-  const completionOptions: CreateCompletionRequest = {
+  const completionOptions = {
     model: GPT_MODEL,
     messages,
     max_tokens: MAX_TOKEN_RESPONSE_ANSWER,
-    temperature: 0,
-    stream: true
+    temperature: 0
   }
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -169,10 +168,10 @@ serve(async (req) => {
     body: JSON.stringify(completionOptions),
   })
 
-  return new Response(response.body, {
+  return new Response(JSON.stringify({...await response.json(), embedding_input}), {
     headers: {
       ...corsHeaders,
-      'Content-Type': 'text/event-stream',
+      'Content-Type': 'application/json',
     },
   })
 })

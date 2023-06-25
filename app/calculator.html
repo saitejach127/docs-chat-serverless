@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <style>
+        .user-message {
+            background-color: #ec7200;
+            color: white;
+            text-align: right;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 5px;
+        }
+
+        .assistant-message {
+            background-color: #f2f2f2;
+            text-align: left;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <center><h3>Smart Calculator</h3></center>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6 col-md-6 col-sm-12" style="height: 85vh; border-right: 1px solid black;">
+                <textarea class="w-100 h-100" id="system-msg"></textarea>
+                <center><button id="system-msg-btn" class="btn btn-primary" style="background-color: #ec7200;">Submit</button></center>
+            </div>
+            <div class="col-lg-6 col-md-6 col-sm-12">
+                <div class="w-100 h-100" style="border: 1px solid black;">
+                    <div style="overflow-y: scroll; height: 80vh;" id="chat-log">
+                        
+                    </div>
+                    <div style="position: fixed; bottom: 1em;">
+                        <form id="user-form">
+                            <input class="form-control-sm" style="width: 30em;" id="user-msg" />
+                        <button id="user-submit-btn" type="submit" class="btn btn-success" style="width: 8em; background-color: #ec7200;">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script>
+        var chatLog = document.getElementById("chat-log");
+        var systemMessageSubmitBtn = document.getElementById("system-msg-btn");
+        var SYSTEM_MSG = "You are a chatbot who answers the questions asked using the below formulas and ask for any information which is required to calculate the result of not provided already\nIf any other question not related to calculations and translation is asked reply with 'I am just a calculator' \nTo calculate totalpayout use the formula increment*mysalary and store it as totalpayout \nTo calculate planmetricval use the formula totalpayout + 76 \nTo calculate planparamval use the formula if(totalpayout>increment) ? totalpayout +23 : increment + 5 and store it as planparamval\n\n Answer the question in markdown format if required. Explain the calculations step by step. Output the calculations in markdown format."
+        var chatHistory = [{
+            "role": "system",
+            "content": SYSTEM_MSG
+        }];
+        var userSubmitForm = document.getElementById("user-form");
+
+        function addUserMessage(message) {
+            const chatMessage = document.createElement("div");
+            chatMessage.classList.add("user-message");
+            chatMessage.innerHTML = `<p>${message}</p>`;
+            chatLog.appendChild(chatMessage);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        function addAssistantMessage(message) {
+            const chatMessage = document.createElement("div");
+            chatMessage.classList.add("assistant-message");
+            chatMessage.innerHTML = `<p>${message}</p>`;
+            chatLog.appendChild(chatMessage);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        systemMessageSubmitBtn.onclick = () => {
+            var systemMsg = document.getElementById("system-msg").value;
+            SYSTEM_MSG = systemMsg;
+            chatHistory = [{
+            "role": "system",
+            "content": SYSTEM_MSG
+        }];
+            document.querySelectorAll(".user-message").forEach((item) => {item.remove()});
+            document.querySelectorAll(".assistant-message").forEach((item) => {item.remove()});
+        }
+
+        userSubmitForm.onsubmit = async (e) => {
+            e.preventDefault();
+            var userMsg = document.getElementById("user-msg").value;
+            document.getElementById("user-msg").value = "";
+            if(userMsg && userMsg.trim() !== ""){
+                addUserMessage(userMsg);
+                chatHistory.push({
+                    "role": "user",
+                    "content": userMsg
+                });
+                var response = await fetch("https://fbhwttacuyzgmbgdbusv.supabase.co/functions/v1/plan-gpt-query", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        "messages": chatHistory
+                    })
+                });
+                var chatResponse = await response.json();
+                var assistantResponse = chatResponse.choices[0].message.content;
+                addAssistantMessage(assistantResponse.replace("\n\n", "<br>").replace("\n", "<br>"));
+                chatHistory.push({
+                    "role": "assistant",
+                    "content": assistantResponse
+                });
+            }
+        }
+
+        document.getElementById("system-msg").value = SYSTEM_MSG
+
+    </script>
+</body>
+</html>
