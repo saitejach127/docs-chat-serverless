@@ -121,7 +121,8 @@ serve(async (req) => {
           role: "user",
           content: answerPrompt
         }
-      ]
+      ],
+      stream: true
     }
 
     const answerGptResponse = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -133,12 +134,9 @@ serve(async (req) => {
       body: JSON.stringify(answerGptRequest),
     });
 
-    var answerJSON = await answerGptResponse.json();
-
-    return new Response(JSON.stringify({answerPrompt,answerJSON}), {
+    return new Response(answerGptResponse.body, {
       headers: {
         ...corsHeaders,
-        "Content-Type": "application/json",
       },
     });
 
