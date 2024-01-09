@@ -76,10 +76,17 @@ serve(async (req) => {
     var embedding_input_json = await functionParamResponse.json();
     var embedding_input = JSON.parse(embedding_input_json.choices[0].message.function_call.arguments)["question"]
   console.log("crossed embeddings call openai with", embedding_input);
-    const embeddingResponse = await openai.createEmbedding({
+    const embeddingResponse = await fetch("https://api.openai.com/v1/embeddings", {
+      headers: {
+        Authorization: `Bearer ${openAiKey}`,
+        "Content-Type": "application/json",
+      },
+      method: "POST", 
+      body: JSON.stringify({
       model: EMBEDDING_MODEL,
       input: embedding_input,
-    })
+    }),
+    });
   
     const [{ embedding }] = embeddingResponse.data
 console.log("got embedding from openai")
