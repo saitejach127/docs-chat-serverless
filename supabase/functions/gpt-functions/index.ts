@@ -81,7 +81,7 @@ serve(async (req) => {
       input: embedding_input,
     })
   
-    const [{ embedding }] = embeddingResponse.data.data
+    const [{ embedding }] = embeddingResponse.data
 console.log("got embedding from openai")
     const pineconeRequest = {
       "includeValues": "false",
