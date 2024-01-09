@@ -90,9 +90,9 @@ serve(async (req) => {
       "vector": embedding
     }
 
-    const pineconeResponse = await fetch('https://docs-store-3d1b028.svc.asia-southeast1-gcp-free.pinecone.io/query', {
+    const pineconeResponse = await fetch('https://summary-docs-index-d2784ca.svc.us-east-1-aws.pinecone.io/query', {
       headers: {
-        'Api-key': `759440df-8eee-41de-9973-93cec83bc744`,
+        'Api-key': `214b5e79-8256-4a22-b404-0afc60ee8313`,
         "Content-Type": "application/json",
       },
       method: "POST", 
