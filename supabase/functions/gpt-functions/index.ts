@@ -75,7 +75,7 @@ serve(async (req) => {
 
     var embedding_input_json = await functionParamResponse.json();
     var embedding_input = JSON.parse(embedding_input_json.choices[0].message.function_call.arguments)["question"]
-
+  console.log("crossed embeddings call openai with", embedding_input);
     const embeddingResponse = await openai.createEmbedding({
       model: EMBEDDING_MODEL,
       input: embedding_input,
@@ -101,7 +101,7 @@ serve(async (req) => {
 
     const pineconeResponseJson = await pineconeResponse.json();
     const contextData = pineconeResponseJson.matches.map((a) => (a.metadata.text)).join("\n")
-
+console.log("called pinecone done", contextData);
     const answerPrompt = `
     You are a ServiceNow Documentation Chatbot. Use the below Context and answer the question delimited by triple hyphens briefly and in a detailed manner.  
 
@@ -133,7 +133,7 @@ serve(async (req) => {
       method: "POST", 
       body: JSON.stringify(answerGptRequest),
     });
-
+console.log("done final call")
     return new Response(answerGptResponse.body, {
       headers: {
         ...corsHeaders,
