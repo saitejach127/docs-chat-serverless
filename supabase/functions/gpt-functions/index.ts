@@ -82,14 +82,14 @@ serve(async (req) => {
     })
   
     const [{ embedding }] = embeddingResponse.data.data
-
+console.log("got embedding from openai")
     const pineconeRequest = {
       "includeValues": "false",
       "includeMetadata": "true",
       "topK": PINECONE_TOP_RESULT_COUNT,
       "vector": embedding
     }
-
+console.log("create pine req")
     const pineconeResponse = await fetch('https://summary-docs-index-d2784ca.svc.us-east-1-aws.pinecone.io/query', {
       headers: {
         'Api-key': `214b5e79-8256-4a22-b404-0afc60ee8313`,
@@ -98,8 +98,9 @@ serve(async (req) => {
       method: "POST", 
       body: JSON.stringify(pineconeRequest),
     });
-
+console.log("called pinecone")
     const pineconeResponseJson = await pineconeResponse.json();
+    console.log("printing pine resp", pineconeResponseJson)
     const contextData = pineconeResponseJson.matches.map((a) => (a.metadata.text)).join("\n")
 console.log("called pinecone done", contextData);
     const answerPrompt = `
