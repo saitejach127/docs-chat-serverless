@@ -76,7 +76,7 @@ serve(async (req) => {
     var embedding_input_json = await functionParamResponse.json();
     var embedding_input = JSON.parse(embedding_input_json.choices[0].message.function_call.arguments)["question"]
   console.log("crossed embeddings call openai with", embedding_input);
-    const embeddingResponse = await fetch("https://api.openai.com/v1/embeddings", {
+    const embedResponse = await fetch("https://api.openai.com/v1/embeddings", {
       headers: {
         Authorization: `Bearer ${openAiKey}`,
         "Content-Type": "application/json",
@@ -87,7 +87,7 @@ serve(async (req) => {
       input: embedding_input,
     }),
     });
-  
+    let embeddingResponse = await embedResponse.json();
     const [{ embedding }] = embeddingResponse.data
 console.log("got embedding from openai")
     const pineconeRequest = {
