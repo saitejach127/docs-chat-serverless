@@ -97,9 +97,9 @@ console.log("got embedding from openai")
       "vector": embedding
     }
 console.log("create pine req")
-    const pineconeResponse = await fetch('https://summary-docs-index-d2784ca.svc.us-east-1-aws.pinecone.io/query', {
+    const pineconeResponse = await fetch('https://doc-index-3d1b028.svc.gcp-starter.pinecone.io/query', {
       headers: {
-        'Api-key': `214b5e79-8256-4a22-b404-0afc60ee8313`,
+        'Api-key': `759440df-8eee-41de-9973-93cec83bc744`,
         "Content-Type": "application/json",
       },
       method: "POST", 
